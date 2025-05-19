@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO accounts (id, user_id, balance, currency)\n            VALUES ($1, $2, 0, 'USD')\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bbb10ac22c7100d10f8761e3f43403615872872b9d55662e7dffc53e09c78a69"
+}
