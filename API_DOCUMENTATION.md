@@ -1,8 +1,8 @@
-# Dodo Payments - Transaction Manager API Documentation
+# Transaction Manager API Documentation
 
 ## Overview
 
-This document provides detailed information about the API endpoints available in the Dodo Payments Transaction Manager service. The service is a RESTful API built with Axum that allows users to manage their accounts and transactions.
+This document provides detailed information about the API endpoints available in the Transaction Manager service. The service is a RESTful API built with Axum that allows users to manage their accounts and transactions.
 
 ## Authentication
 

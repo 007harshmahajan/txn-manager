@@ -2,8 +2,8 @@
 name = "txn-manager"
 version = "0.1.0"
 edition = "2021"
-authors = ["Dodo Team"]
-description = "Transaction management service for Dodo Payments"
+authors = ["Harsh Mahajan"]
+description = "Transaction management service"
 
 # Define both lib and bin targets
 [[bin]]

@@ -1,4 +1,4 @@
-# Building the Dodo Payments Transaction Manager
+# Building the  Transaction Manager
 
 This document provides detailed instructions for building and running the transaction manager service.
 
