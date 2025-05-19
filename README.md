@@ -1,7 +1,6 @@
-# Dodo Payments - Transaction Manager
+# Transaction Manager
 
-A backend service for managing transactions and user accounts in a simplified version of Dodo Payments' system.
-
+A backend service for managing transactions and user accounts
 ## Features
 
 - User Management: Registration, authentication, and profile management
