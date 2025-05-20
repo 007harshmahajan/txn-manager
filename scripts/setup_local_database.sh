@@ -12,7 +12,7 @@ if ! command -v psql &> /dev/null; then
 fi
 
 # Check if PostgreSQL service is running
-if ! pg_isready -h localhost -p 5432 -U postgres &> /dev/null; then
+if ! pg_isready -h localhost -p 5433 -U postgres &> /dev/null; then
     echo "PostgreSQL service is not running. Starting PostgreSQL..."
     echo "Attempting to start PostgreSQL service..."
     
@@ -32,7 +32,7 @@ if ! pg_isready -h localhost -p 5432 -U postgres &> /dev/null; then
     sleep 5
     
     # Check again if PostgreSQL is running
-    if ! pg_isready -h localhost -p 5432 -U postgres &> /dev/null; then
+    if ! pg_isready -h localhost -p 5433 -U postgres &> /dev/null; then
         echo "Failed to start PostgreSQL service. Please start it manually and try again."
         exit 1
     fi
@@ -61,7 +61,7 @@ echo "Preparing SQLx metadata for offline mode..."
 mkdir -p .sqlx
 
 # Run SQLx prepare without --merged flag
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare
+DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare
 
 # Create or update .cargo/config.toml for offline mode
 mkdir -p .cargo
@@ -73,4 +73,4 @@ echo "Creating directories for performance testing..."
 mkdir -p performance_results
 
 echo "Database and SQLx setup complete! You can now run the application with: cargo run"
-echo "Database URL: postgres://postgres:postgres@localhost:5432/txn_manager" 
+echo "Database URL: postgres://postgres:postgres@localhost:5433/txn_manager" 

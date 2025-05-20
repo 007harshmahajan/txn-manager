@@ -264,7 +264,7 @@ If you need to manually prepare SQLx for offline mode:
    ```
 3. Prepare the metadata:
    ```bash
-   DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare --merged
+   DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare --merged
    ```
 4. Enable offline mode by creating `.cargo/config.toml`:
    ```toml

@@ -19,7 +19,7 @@ pub async fn setup() -> (PgPool, String) {
     let db_name = format!("test_db_{}", Uuid::new_v4().to_string().replace("-", ""));
 
     // Connect to the default postgres database to create our test database
-    let admin_url = "postgres://postgres:postgres@localhost:5432/postgres";
+    let admin_url = "postgres://postgres:postgres@localhost:5433/postgres";
     let admin_pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(admin_url)
@@ -33,7 +33,7 @@ pub async fn setup() -> (PgPool, String) {
         .expect("Failed to create test database");
 
     // Connect to the new test database
-    let db_url = format!("postgres://postgres:postgres@localhost:5432/{}", db_name);
+    let db_url = format!("postgres://postgres:postgres@localhost:5433/{}", db_name);
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&db_url)
@@ -72,7 +72,7 @@ pub async fn teardown(db_url: &str) {
     let db_name = db_url.split('/').last().unwrap();
 
     // Connect to the default postgres database to drop our test database
-    let admin_url = "postgres://postgres:postgres@localhost:5432/postgres";
+    let admin_url = "postgres://postgres:postgres@localhost:5433/postgres";
     let admin_pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(admin_url)

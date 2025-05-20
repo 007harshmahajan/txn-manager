@@ -3,11 +3,11 @@
 echo "Setting up SQLx for offline development..."
 
 # Check if database is reachable
-if pg_isready -h localhost -p 5432 -d txn_manager -U postgres; then
+if pg_isready -h localhost -p 5433 -d txn_manager -U postgres; then
     echo "Database is available. Preparing SQLx for offline development..."
     
     # Prepare SQLx for offline development - without any flags
-    DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare
+    DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare
     
     if [ $? -eq 0 ]; then
         echo "SQLx prepared successfully. You can now build without a database connection."

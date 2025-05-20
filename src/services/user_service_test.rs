@@ -15,7 +15,7 @@ mod tests {
         
         // Get database URL from environment or use a test database
         let database_url = env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/txn_manager_test".to_string());
+            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5433/txn_manager_test".to_string());
         
         // Connect to the database
         let pool = PgPoolOptions::new()

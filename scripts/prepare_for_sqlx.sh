@@ -5,7 +5,7 @@
 echo "Preparing environment for SQLx..."
 
 # Check if PostgreSQL is running using TCP connection instead of socket
-if ! pg_isready -h localhost -p 5432 -U postgres; then
+if ! pg_isready -h localhost -p 5433 -U postgres; then
     echo "PostgreSQL database is not available on localhost. Setting up with Docker..."
     
     # Check if docker is available
@@ -27,7 +27,7 @@ if ! pg_isready -h localhost -p 5432 -U postgres; then
                 -e POSTGRES_PASSWORD=postgres \
                 -e POSTGRES_USER=postgres \
                 -e POSTGRES_DB=txn_manager \
-                -p 5432:5432 \
+                -p 5433:5432 \
                 -d postgres:16
         fi
     fi
@@ -37,14 +37,14 @@ if ! pg_isready -h localhost -p 5432 -U postgres; then
     sleep 10
     
     # Verify connection again
-    if ! pg_isready -h localhost -p 5432 -U postgres; then
+    if ! pg_isready -h localhost -p 5433 -U postgres; then
         echo "Still unable to connect to PostgreSQL. Check Docker and try again."
         exit 1
     fi
 fi
 
 # Set up the database URL
-DB_URL="postgres://postgres:postgres@localhost:5432/txn_manager"
+DB_URL="postgres://postgres:postgres@localhost:5433/txn_manager"
 
 # Create the database if it doesn't exist (using -h flag to force TCP connection)
 if ! PGPASSWORD=postgres psql -h localhost -U postgres -lqt | cut -d \| -f 1 | grep -qw txn_manager; then

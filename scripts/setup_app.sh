@@ -43,7 +43,7 @@ if [ "$POSTGRES_INSTALLED" = true ]; then
     echo "Attempting to use local PostgreSQL..."
     
     # Check if PostgreSQL server is running
-    if pg_isready -h localhost -p 5432 -U postgres &> /dev/null; then
+    if pg_isready -h localhost -p 5433 -U postgres &> /dev/null; then
         echo "✓ PostgreSQL server is running."
         POSTGRES_RUNNING=true
     else
@@ -58,7 +58,7 @@ if [ "$POSTGRES_INSTALLED" = true ]; then
         
         # Check again after trying to start
         sleep 3
-        if pg_isready -h localhost -p 5432 -U postgres &> /dev/null; then
+        if pg_isready -h localhost -p 5433 -U postgres &> /dev/null; then
             echo "✓ PostgreSQL server started successfully."
             POSTGRES_RUNNING=true
         else
@@ -93,7 +93,7 @@ if [ "$POSTGRES_INSTALLED" = true ]; then
                 
                 # Prepare SQLx metadata
                 echo "Preparing SQLx metadata for offline development..."
-                if DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare; then
+                if DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare; then
                     echo "✓ SQLx metadata prepared successfully."
                     
                     # Create config for offline mode
@@ -104,7 +104,7 @@ SQLX_OFFLINE = "true"' > .cargo/config.toml
                     echo "Local PostgreSQL setup completed successfully!"
                     echo "You can now run the application with: cargo run"
                     echo
-                    echo "Database URL: postgres://postgres:postgres@localhost:5432/txn_manager"
+                    echo "Database URL: postgres://postgres:postgres@localhost:5433/txn_manager"
                     exit 0
                 else
                     echo "✗ Failed to prepare SQLx metadata."
@@ -136,7 +136,7 @@ if [ "$DOCKER_AVAILABLE" = true ]; then
         fi
     else
         echo "Creating new PostgreSQL container..."
-        if docker run --name txn-manager-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=txn_manager -p 5432:5432 -d postgres:16; then
+        if docker run --name txn-manager-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=txn_manager -p 5433:5432 -d postgres:16; then
             echo "✓ Container created and started successfully."
             
             # Wait for PostgreSQL to start in the container
@@ -149,12 +149,12 @@ if [ "$DOCKER_AVAILABLE" = true ]; then
     fi
     
     # Check if PostgreSQL in Docker is running
-    if pg_isready -h localhost -p 5432 -d txn_manager -U postgres; then
+    if pg_isready -h localhost -p 5433 -d txn_manager -U postgres; then
         echo "✓ PostgreSQL in Docker is running and accessible."
         
         # Prepare SQLx metadata
         echo "Preparing SQLx metadata for offline development..."
-        if DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare; then
+        if DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare; then
             echo "✓ SQLx metadata prepared successfully."
             
             # Create config for offline mode
@@ -165,7 +165,7 @@ SQLX_OFFLINE = "true"' > .cargo/config.toml
             echo "Docker PostgreSQL setup completed successfully!"
             echo "You can now run the application with: cargo run"
             echo
-            echo "Database URL: postgres://postgres:postgres@localhost:5432/txn_manager"
+            echo "Database URL: postgres://postgres:postgres@localhost:5433/txn_manager"
             exit 0
         else
             echo "✗ Failed to prepare SQLx metadata."

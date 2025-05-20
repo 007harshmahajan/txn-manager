@@ -22,7 +22,7 @@ else
             -e POSTGRES_PASSWORD=postgres \
             -e POSTGRES_USER=postgres \
             -e POSTGRES_DB=txn_manager \
-            -p 5432:5432 \
+            -p 5433:5432 \
             -d postgres:16
     fi
 fi
@@ -32,7 +32,7 @@ echo "Waiting for PostgreSQL to be ready..."
 sleep 5
 
 # Try to connect and prepare SQLx metadata
-if pg_isready -h localhost -p 5432 -d txn_manager -U postgres; then
+if pg_isready -h localhost -p 5433 -d txn_manager -U postgres; then
     echo "Database is ready. Preparing SQLx metadata for offline mode..."
     
     # Create .sqlx directory if it doesn't exist
@@ -41,12 +41,12 @@ if pg_isready -h localhost -p 5432 -d txn_manager -U postgres; then
     # Prepare SQLx metadata
     if command -v cargo-sqlx &> /dev/null; then
         echo "Running cargo sqlx prepare..."
-        DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare
+        DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare
     else
         echo "cargo-sqlx not found. Installing it..."
         cargo install sqlx-cli --no-default-features --features postgres
         echo "Running cargo sqlx prepare..."
-        DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare
+        DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare
     fi
     
     # Create or update .cargo/config.toml for offline mode
@@ -57,7 +57,7 @@ SQLX_OFFLINE = "true"' > .cargo/config.toml
     echo "SQLx metadata prepared for offline development."
 else
     echo "Database connection failed. SQLx metadata preparation skipped."
-    echo "You may need to run manually: DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare"
+    echo "You may need to run manually: DATABASE_URL=postgres://postgres:postgres@localhost:5433/txn_manager cargo sqlx prepare"
 fi
 
 # Create directories for performance testing
@@ -65,4 +65,4 @@ echo "Creating directories for performance testing..."
 mkdir -p performance_results
 
 echo "Database setup complete. You can now run the application with: cargo run"
-echo "Database URL: postgres://postgres:postgres@localhost:5432/txn_manager" 
+echo "Database URL: postgres://postgres:postgres@localhost:5433/txn_manager" 
