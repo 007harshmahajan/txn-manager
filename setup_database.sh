@@ -41,12 +41,12 @@ if pg_isready -h localhost -p 5432 -d txn_manager -U postgres; then
     # Prepare SQLx metadata
     if command -v cargo-sqlx &> /dev/null; then
         echo "Running cargo sqlx prepare..."
-        DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare --merged
+        DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare
     else
         echo "cargo-sqlx not found. Installing it..."
         cargo install sqlx-cli --no-default-features --features postgres
         echo "Running cargo sqlx prepare..."
-        DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare --merged
+        DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare
     fi
     
     # Create or update .cargo/config.toml for offline mode
@@ -57,8 +57,12 @@ SQLX_OFFLINE = "true"' > .cargo/config.toml
     echo "SQLx metadata prepared for offline development."
 else
     echo "Database connection failed. SQLx metadata preparation skipped."
-    echo "You may need to run manually: DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare --merged"
+    echo "You may need to run manually: DATABASE_URL=postgres://postgres:postgres@localhost:5432/txn_manager cargo sqlx prepare"
 fi
+
+# Create directories for performance testing
+echo "Creating directories for performance testing..."
+mkdir -p performance_results
 
 echo "Database setup complete. You can now run the application with: cargo run"
 echo "Database URL: postgres://postgres:postgres@localhost:5432/txn_manager" 

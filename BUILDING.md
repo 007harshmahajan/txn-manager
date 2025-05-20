@@ -73,6 +73,184 @@ cp .env.example .env
 cargo run
 ```
 
+## Testing
+
+The Transaction Manager includes a comprehensive test suite covering unit tests, integration tests, and performance tests.
+
+### Unit Tests
+
+Unit tests validate individual components in isolation. Run them with:
+
+```bash
+# Run all unit tests
+cargo test --lib
+
+# Run unit tests for a specific module
+cargo test --lib -- utils::auth
+```
+
+### Integration Tests
+
+Integration tests require a running PostgreSQL instance as they interact with a real database. These tests create temporary test databases that are cleaned up after the tests complete.
+
+```bash
+# Run all integration tests
+cargo test --test integration
+
+# Run a specific integration test
+cargo test --test integration -- transaction_tests
+```
+
+### Performance Testing
+
+Performance tests help ensure the application maintains acceptable response times under various conditions.
+
+#### Setup for Performance Testing
+
+1. Install the necessary tools:
+
+   ```bash
+   # Install hey (HTTP load generator)
+   go install github.com/rakyll/hey@latest
+
+   # Alternatively, use Apache Bench (ab) if already installed
+   # sudo apt-get install apache2-utils
+   ```
+
+2. Start the application in release mode:
+
+   ```bash
+   cargo run --release
+   ```
+
+3. Run performance tests:
+
+   ```bash
+   # Test the health endpoint with 200 requests (50 concurrent)
+   hey -n 200 -c 50 http://localhost:8080/
+
+   # Test user registration with 50 requests (10 concurrent)
+   hey -n 50 -c 10 -m POST -H "Content-Type: application/json" -d '{"username":"perftest","email":"perf@example.com","password":"securepassword","first_name":"Performance","last_name":"Test"}' http://localhost:8080/api/v1/users/register
+   ```
+
+### Load Testing
+
+Load testing helps identify how the system performs under heavy usage.
+
+1. Install k6 (modern load testing tool):
+
+   ```bash
+   # On Ubuntu/Debian
+   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+   echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+   sudo apt-get update
+   sudo apt-get install k6
+
+   # On macOS
+   brew install k6
+   ```
+
+2. Create a load test script (e.g., `load-test.js`):
+
+   ```javascript
+   import http from 'k6/http';
+   import { sleep, check } from 'k6';
+
+   export const options = {
+     vus: 100,           // Virtual users
+     duration: '30s',    // Test duration
+     thresholds: {
+       http_req_duration: ['p(95)<500'], // 95% of requests must complete below 500ms
+     },
+   };
+
+   // Test user creation and login
+   export default function () {
+     // Generate unique username
+     const username = `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+     
+     // Register a new user
+     const registerRes = http.post('http://localhost:8080/api/v1/users/register', JSON.stringify({
+       username: username,
+       email: `${username}@example.com`,
+       password: 'securepassword123',
+       first_name: 'Load',
+       last_name: 'Test'
+     }), {
+       headers: { 'Content-Type': 'application/json' },
+     });
+     
+     check(registerRes, {
+       'register success': (r) => r.status === 200,
+     });
+     
+     sleep(1);
+     
+     // Login with created user
+     const loginRes = http.post('http://localhost:8080/api/v1/users/login', JSON.stringify({
+       username: username,
+       password: 'securepassword123',
+     }), {
+       headers: { 'Content-Type': 'application/json' },
+     });
+     
+     check(loginRes, {
+       'login success': (r) => r.status === 200,
+     });
+     
+     sleep(1);
+   }
+   ```
+
+3. Run the load test:
+
+   ```bash
+   k6 run load-test.js
+   ```
+
+4. Analyze the results to identify performance bottlenecks and optimize the application.
+
+### Benchmark Testing
+
+For micro-benchmarks of specific functions, use Rust's built-in benchmarking features:
+
+1. Add the benchmark dependency to your `Cargo.toml`:
+
+   ```toml
+   [dev-dependencies]
+   criterion = "0.3"
+
+   [[bench]]
+   name = "transaction_benchmark"
+   harness = false
+   ```
+
+2. Create benchmark files in a `benches/` directory:
+
+   ```rust
+   // benches/transaction_benchmark.rs
+   use criterion::{criterion_group, criterion_main, Criterion};
+   use txn_manager::models::decimal::SqlxDecimal;
+   use rust_decimal::Decimal;
+   use std::str::FromStr;
+
+   fn decimal_conversion_benchmark(c: &mut Criterion) {
+       c.bench_function("decimal_to_sqlx_decimal", |b| {
+           let decimal = Decimal::from_str("123.456").unwrap();
+           b.iter(|| SqlxDecimal::from(decimal))
+       });
+   }
+
+   criterion_group!(benches, decimal_conversion_benchmark);
+   criterion_main!(benches);
+   ```
+
+3. Run the benchmarks:
+
+   ```bash
+   cargo bench
+   ```
+
 ## SQLx Offline Mode
 
 This project uses SQLx's offline mode to allow building without a database connection. This is set up automatically when you run the setup_database.sh script. 
@@ -147,6 +325,51 @@ sudo usermod -aG docker $USER
 ### 4. PostgreSQL Authentication Issues
 
 If PostgreSQL rejects your connection with authentication errors, review the credentials in your `.env` file and ensure they match with what was set up in the database.
+
+## Performance Optimization
+
+The Transaction Manager has undergone performance testing with both individual endpoints (using `hey` or Apache Bench) and holistic load testing (using k6). The detailed results and analysis are available in [PERFORMANCE.md](./PERFORMANCE.md).
+
+### Key Performance Findings
+
+- The core application framework is performant (health endpoint responds in ~1.7ms on average)
+- Under load, the system experiences significant slowdowns:
+  - User login operations average 644ms
+  - The 95th percentile response time is 3.3s (target: 500ms)
+  - Registration requests sometimes fail with 500 errors under load
+
+### Recommended Optimizations
+
+Based on the performance test results, several optimizations have been identified:
+
+1. **Database Connection Pooling**: Increase the maximum connections from 5 to 20 and add minimum connection settings:
+
+   ```rust
+   let pool = PgPoolOptions::new()
+       .max_connections(20)  // Increase from 5
+       .min_connections(5)   // Maintain ready connections
+       .acquire_timeout(Duration::from_secs(5))
+       .idle_timeout(Duration::from_secs(30))
+       .connect(database_url)
+       .await?;
+   ```
+
+2. **Query Optimization**: Add appropriate indices to frequently queried columns, particularly for user authentication flows.
+
+3. **Authentication Performance**: Consider caching authentication results and optimizing the password hashing work factor.
+
+4. **Error Handling**: Add retry logic and improved logging for database operations to reduce 500 errors.
+
+For a complete list of recommendations and implementation details, see the [PERFORMANCE.md](./PERFORMANCE.md) document.
+
+### Running Optimized Builds
+
+For production or performance testing, always use release mode builds:
+
+```bash
+cargo build --release
+cargo run --release
+```
 
 ## Troubleshooting
 

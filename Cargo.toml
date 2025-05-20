@@ -56,3 +56,8 @@ fake = { version = "2.9.1", features = ["derive", "uuid", "chrono"] }
 tokio-test = "0.4.3"
 reqwest = { version = "0.11.22", features = ["json"] }
 mockall = "0.12.1"
+criterion = "0.4.0"
+
+[[bench]]
+name = "transaction_benchmark"
+harness = false

@@ -1,6 +1,7 @@
 # Transaction Manager
 
-A backend service for managing transactions and user accounts
+A backend service for managing transactions and user accounts in a financial system.
+
 ## Features
 
 - User Management: Registration, authentication, and profile management
@@ -17,6 +18,118 @@ A backend service for managing transactions and user accounts
 - [PostgreSQL](https://www.postgresql.org/): Relational database
 - [Docker](https://www.docker.com/): Containerization
 
+## Database Schema
+
+The system uses PostgreSQL and consists of three main tables:
+
+### Users Table
+
+Stores user information and authentication details.
+
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+```
+
+### Accounts Table
+
+Stores account information, with each account belonging to a user.
+
+```sql
+CREATE TABLE accounts (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    balance DECIMAL(19, 4) NOT NULL DEFAULT 0.0,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT balance_non_negative CHECK (balance >= 0)
+);
+
+CREATE INDEX idx_accounts_user ON accounts(user_id);
+```
+
+### Transactions Table
+
+Records all financial transactions between accounts.
+
+```sql
+CREATE TABLE transactions (
+    id UUID PRIMARY KEY,
+    sender_account_id UUID REFERENCES accounts(id),
+    receiver_account_id UUID REFERENCES accounts(id),
+    amount DECIMAL(19, 4) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    transaction_type VARCHAR(10) NOT NULL CHECK (transaction_type IN ('TRANSFER', 'DEPOSIT', 'WITHDRAWAL')),
+    status VARCHAR(10) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED')),
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT amount_positive CHECK (amount > 0),
+    CONSTRAINT transaction_not_self CHECK (
+        (transaction_type = 'TRANSFER' AND sender_account_id IS NOT NULL AND receiver_account_id IS NOT NULL AND sender_account_id != receiver_account_id) OR
+        (transaction_type = 'DEPOSIT' AND sender_account_id IS NULL AND receiver_account_id IS NOT NULL) OR
+        (transaction_type = 'WITHDRAWAL' AND sender_account_id IS NOT NULL AND receiver_account_id IS NULL)
+    )
+);
+
+CREATE INDEX idx_transactions_sender ON transactions(sender_account_id);
+CREATE INDEX idx_transactions_receiver ON transactions(receiver_account_id);
+```
+
+### Entity Relationship Diagram
+
+```
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│   Users     │       │  Accounts   │       │Transactions │
+├─────────────┤       ├─────────────┤       ├─────────────┤
+│ id          │       │ id          │       │ id          │
+│ username    │       │ user_id     │─────┐ │ sender_id   │─┐
+│ email       │       │ balance     │     │ │ receiver_id │ │
+│ password    │  1:N  │ currency    │  1:N│ │ amount      │ │
+│ first_name  ├───────┤ created_at  │     └─┤ currency    │ │
+│ last_name   │       │ updated_at  │       │ type        │ │
+│ created_at  │       └─────────────┘       │ status      │ │
+│ updated_at  │                             │ description │ │
+└─────────────┘                             │ created_at  │ │
+                                            │ updated_at  │ │
+                                            └──────┬──────┘ │
+                                                   │        │
+                                                   └────────┘
+```
+
+## Project Structure
+
+```
+txn-manager/
+├── src/                 # Source code
+│   ├── api/             # API route handlers
+│   ├── config/          # Configuration management
+│   ├── db/              # Database connection setup
+│   ├── middleware/      # Axum middleware (auth, etc.)
+│   ├── models/          # Data models
+│   ├── services/        # Business logic
+│   └── utils/           # Shared utilities
+├── migrations/          # Database migrations
+├── tests/               # Integration tests
+├── API_DOCUMENTATION.md # Detailed API documentation
+└── README.md            # This file
+```
+
+## Documentation
+
+- For detailed API documentation, refer to [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+- For build instructions, see [BUILDING.md](./BUILDING.md)
+- For performance optimization, see [PERFORMANCE.md](./PERFORMANCE.md)
+
 ## Setup and Installation
 
 ### Prerequisites
@@ -24,6 +137,21 @@ A backend service for managing transactions and user accounts
 - [Rust](https://www.rust-lang.org/tools/install) (1.75 or later)
 - [PostgreSQL](https://www.postgresql.org/download/) (14 or later)
 - [Docker](https://docs.docker.com/get-docker/) (optional, for containerized deployment)
+
+### Quick Start with Docker
+
+The fastest way to get started is with Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/txn-manager.git
+cd txn-manager
+
+# Start with Docker Compose
+docker-compose up -d
+```
+
+The API will be available at http://localhost:8080
 
 ### Local Development Setup
 
@@ -41,470 +169,74 @@ A backend service for managing transactions and user accounts
 
 3. Set up the database:
    ```bash
-   # Create a PostgreSQL database named 'txn_manager'
-   createdb txn_manager
+   # Option 1: Using the combined setup script (recommended)
+   ./setup_app.sh
+   
+   # Option 2: Setup with local PostgreSQL
+   ./setup_local_database.sh
+   
+   # Option 3: Setup with Docker
+   ./setup_database.sh
+   
+   # Option 4: SQLx offline mode only (no database)
+   ./setup_sqlx_offline.sh
    ```
 
-4. Run the application:
+4. Build and run the application:
    ```bash
    cargo run
    ```
 
-### Using Docker
+   The API will be available at http://localhost:8080
 
-1. Build and start the containers:
-   ```bash
-   docker-compose up -d
-   ```
+## Troubleshooting
 
-2. The application will be available at http://localhost:8080
+For common issues and their solutions, see [BUILDING.md](./BUILDING.md).
 
-## API Documentation
-
-### Authentication
-
-All endpoints except for registration and login require authentication via JWT Bearer token.
-
-Include the token in the Authorization header:
-```
-Authorization: Bearer <your_token>
-```
-
-### User Endpoints
-
-#### Register a new user
-
-```
-POST /api/v1/users/register
-```
-
-Request body:
-```json
-{
-  "username": "johndoe",
-  "email": "john@example.com",
-  "password": "securepassword",
-  "first_name": "John",
-  "last_name": "Doe"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "User registered successfully",
-  "data": {
-    "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-    "username": "johndoe",
-    "email": "john@example.com",
-    "first_name": "John",
-    "last_name": "Doe"
-  }
-}
-```
-
-#### Login
-
-```
-POST /api/v1/users/login
-```
-
-Request body:
-```json
-{
-  "username": "johndoe",
-  "password": "securepassword"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Login successful",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-      "username": "johndoe",
-      "email": "john@example.com",
-      "first_name": "John",
-      "last_name": "Doe"
-    }
-  }
-}
-```
-
-#### Get Current User
-
-```
-GET /api/v1/users/me
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "User profile retrieved",
-  "data": {
-    "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-    "username": "johndoe",
-    "email": "john@example.com",
-    "first_name": "John",
-    "last_name": "Doe"
-  }
-}
-```
-
-#### Update Profile
-
-```
-PUT /api/v1/users/profile
-```
-
-Request body:
-```json
-{
-  "first_name": "Johnny",
-  "last_name": "Doe"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Profile updated successfully",
-  "data": {
-    "id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-    "username": "johndoe",
-    "email": "john@example.com",
-    "first_name": "Johnny",
-    "last_name": "Doe"
-  }
-}
-```
-
-### Account Endpoints
-
-#### Get User Accounts
-
-```
-GET /api/v1/accounts
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Accounts retrieved successfully",
-  "data": [
-    {
-      "id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-      "user_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-      "balance": "1000.0000",
-      "currency": "USD",
-      "created_at": "2023-03-01T12:00:00Z"
-    }
-  ]
-}
-```
-
-#### Get Account Details
-
-```
-GET /api/v1/accounts/:id
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Account retrieved successfully",
-  "data": {
-    "id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-    "user_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-    "balance": "1000.0000",
-    "currency": "USD",
-    "created_at": "2023-03-01T12:00:00Z"
-  }
-}
-```
-
-#### Create New Account
-
-```
-POST /api/v1/accounts
-```
-
-Request body:
-```json
-{
-  "currency": "EUR"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Account created successfully",
-  "data": {
-    "id": "c3d4e5f6-a7b8-9012-cdef-3456789abcde",
-    "user_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-    "balance": "0.0000",
-    "currency": "EUR",
-    "created_at": "2023-03-02T14:30:00Z"
-  }
-}
-```
-
-### Transaction Endpoints
-
-#### Create Transaction
-
-```
-POST /api/v1/transactions
-```
-
-Request body:
-```json
-{
-  "transaction_type": "DEPOSIT",
-  "receiver_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-  "amount": "500.00",
-  "currency": "USD",
-  "description": "Initial deposit"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Transaction created successfully",
-  "data": {
-    "id": "d4e5f6a7-b8c9-0123-defg-456789abcdef",
-    "sender_account_id": null,
-    "receiver_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-    "amount": "500.0000",
-    "currency": "USD",
-    "transaction_type": "DEPOSIT",
-    "status": "COMPLETED",
-    "description": "Initial deposit",
-    "created_at": "2023-03-03T10:15:00Z"
-  }
-}
-```
-
-#### Transfer Money
-
-```
-POST /api/v1/transactions/transfer
-```
-
-Request body:
-```json
-{
-  "sender_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-  "receiver_account_id": "c3d4e5f6-a7b8-9012-cdef-3456789abcde",
-  "amount": "100.00",
-  "description": "Payment for services"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Transfer successful",
-  "data": {
-    "id": "e5f6a7b8-c9d0-1234-efgh-56789abcdefg",
-    "sender_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-    "receiver_account_id": "c3d4e5f6-a7b8-9012-cdef-3456789abcde",
-    "amount": "100.0000",
-    "currency": "USD",
-    "transaction_type": "TRANSFER",
-    "status": "COMPLETED",
-    "description": "Payment for services",
-    "created_at": "2023-03-03T11:45:00Z"
-  }
-}
-```
-
-#### Deposit Money
-
-```
-POST /api/v1/transactions/deposit
-```
-
-Request body:
-```json
-{
-  "account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-  "amount": "200.00",
-  "description": "Monthly deposit"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Deposit successful",
-  "data": {
-    "id": "f6a7b8c9-d0e1-2345-fghi-6789abcdefgh",
-    "sender_account_id": null,
-    "receiver_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-    "amount": "200.0000",
-    "currency": "USD",
-    "transaction_type": "DEPOSIT",
-    "status": "COMPLETED",
-    "description": "Monthly deposit",
-    "created_at": "2023-03-04T09:30:00Z"
-  }
-}
-```
-
-#### Withdraw Money
-
-```
-POST /api/v1/transactions/withdrawal
-```
-
-Request body:
-```json
-{
-  "account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-  "amount": "50.00",
-  "description": "ATM withdrawal"
-}
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Withdrawal successful",
-  "data": {
-    "id": "a7b8c9d0-e1f2-3456-ghij-789abcdefghi",
-    "sender_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-    "receiver_account_id": null,
-    "amount": "50.0000",
-    "currency": "USD",
-    "transaction_type": "WITHDRAWAL",
-    "status": "COMPLETED",
-    "description": "ATM withdrawal",
-    "created_at": "2023-03-05T15:20:00Z"
-  }
-}
-```
-
-#### Get Transaction Details
-
-```
-GET /api/v1/transactions/:id
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Transaction retrieved successfully",
-  "data": {
-    "id": "e5f6a7b8-c9d0-1234-efgh-56789abcdefg",
-    "sender_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-    "receiver_account_id": "c3d4e5f6-a7b8-9012-cdef-3456789abcde",
-    "amount": "100.0000",
-    "currency": "USD",
-    "transaction_type": "TRANSFER",
-    "status": "COMPLETED",
-    "description": "Payment for services",
-    "created_at": "2023-03-03T11:45:00Z"
-  }
-}
-```
-
-#### Get Account Transactions
-
-```
-GET /api/v1/transactions/account/:id?limit=10&offset=0
-```
-
-Response:
-```json
-{
-  "status": "success",
-  "message": "Transactions retrieved successfully",
-  "data": [
-    {
-      "id": "a7b8c9d0-e1f2-3456-ghij-789abcdefghi",
-      "sender_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-      "receiver_account_id": null,
-      "amount": "50.0000",
-      "currency": "USD",
-      "transaction_type": "WITHDRAWAL",
-      "status": "COMPLETED",
-      "description": "ATM withdrawal",
-      "created_at": "2023-03-05T15:20:00Z"
-    },
-    {
-      "id": "f6a7b8c9-d0e1-2345-fghi-6789abcdefgh",
-      "sender_account_id": null,
-      "receiver_account_id": "b2c3d4e5-f6a7-8901-bcde-23456789abcd",
-      "amount": "200.0000",
-      "currency": "USD",
-      "transaction_type": "DEPOSIT",
-      "status": "COMPLETED",
-      "description": "Monthly deposit",
-      "created_at": "2023-03-04T09:30:00Z"
-    }
-  ]
-}
-```
-
-## Error Handling
-
-The API returns appropriate HTTP status codes and structured error responses:
-
-```json
-{
-  "error": "BAD_REQUEST",
-  "message": "Insufficient funds"
-}
-```
-
-Common error codes:
-- 400 Bad Request: Invalid input data
-- 401 Unauthorized: Missing or invalid authentication
-- 403 Forbidden: Insufficient permissions
-- 404 Not Found: Resource not found
-- 409 Conflict: Resource already exists (e.g., username)
-- 500 Internal Server Error: Server-side error
-
-## Testing
-
-### Running Unit Tests
+## Running Tests
 
 ```bash
+# Run unit tests
 cargo test
+
+# Run integration tests (requires PostgreSQL)
+cargo test --test integration -- --ignored
 ```
 
-### Running Integration Tests
+## Performance Testing
+
+The Transaction Manager includes comprehensive performance testing tools:
 
 ```bash
-cargo test -- --test-threads=1 --ignored
+# Run performance tests with the built-in script
+./run_performance_tests.sh
+
+# Track performance improvements over time
+./track_performance.sh
 ```
+
+Performance test results and optimization recommendations are documented in [PERFORMANCE.md](./PERFORMANCE.md).
+
+Key performance metrics:
+- Health endpoint: ~1.7ms average response time
+- User operations: Optimized for concurrent usage with proper connection pooling
+- Database queries: Efficiently structured for minimal latency
+
+For production deployments, always use release builds:
+```bash
+cargo run --release
+```
+
+## Performance Considerations
+
+The service is designed to handle multiple concurrent users efficiently:
+
+- Connection pooling for database access
+- Async/await for non-blocking operations
+- Proper error handling to prevent resource leaks
+- Optimized database queries with appropriate indices
+- Regular performance testing and optimization
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request 

@@ -1,0 +1,350 @@
+# Transaction Manager Performance Test
+Date: Wednesday 21 May 2025 01:46:32 AM IST
+Git Commit: b23b9c4ca11f8e1a886e32c218f7668e723c3075
+Git Branch: master
+
+## System Information
+OS: Linux pop-os 6.12.10-76061203-generic #202412060638~1743109366~22.04~1fce33b SMP PREEMPT_DYNAMIC Thu M x86_64 x86_64 x86_64 GNU/Linux
+CPU: AMD Ryzen 9 7900X 12-Core Processor
+Memory: 61.9886 GB
+
+## Test Parameters
+- K6 Tests: 100 VUs, 30s duration
+- HTTP Endpoints: health, registration, login, accounts, transactions
+
+## Results
+Running Transaction Manager Performance Tests
+--------------------------------------------
+Checking if server is running...
+Server is running. Starting performance tests...
+
+Running test: Health Endpoint
+URL: http://localhost:8080/
+Method: GET
+Concurrency: 50
+Requests: 200
+
+Summary:
+  Total:	0.0197 secs
+  Slowest:	0.0154 secs
+  Fastest:	0.0001 secs
+  Average:	0.0029 secs
+  Requests/sec:	10153.5089
+  
+  Total data:	400 bytes
+  Size/request:	2 bytes
+
+Response time histogram:
+  0.000 [1]	|
+  0.002 [97]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.003 [36]	|■■■■■■■■■■■■■■■
+  0.005 [33]	|■■■■■■■■■■■■■■
+  0.006 [11]	|■■■■■
+  0.008 [3]	|■
+  0.009 [1]	|
+  0.011 [1]	|
+  0.012 [6]	|■■
+  0.014 [6]	|■■
+  0.015 [5]	|■■
+
+
+Latency distribution:
+  10% in 0.0001 secs
+  25% in 0.0004 secs
+  50% in 0.0016 secs
+  75% in 0.0037 secs
+  90% in 0.0072 secs
+  95% in 0.0126 secs
+  99% in 0.0144 secs
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0002 secs, 0.0001 secs, 0.0154 secs
+  DNS-lookup:	0.0002 secs, 0.0000 secs, 0.0031 secs
+  req write:	0.0004 secs, 0.0000 secs, 0.0039 secs
+  resp wait:	0.0013 secs, 0.0000 secs, 0.0135 secs
+  resp read:	0.0005 secs, 0.0000 secs, 0.0048 secs
+
+Status code distribution:
+  [200]	200 responses
+
+
+
+Completed test: Health Endpoint
+--------------------------------------------------
+
+Running test: User Registration
+URL: http://localhost:8080/api/v1/users/register
+Method: POST
+Concurrency: 10
+Requests: 50
+
+Summary:
+  Total:	0.3582 secs
+  Slowest:	0.3568 secs
+  Fastest:	0.0002 secs
+  Average:	0.0708 secs
+  Requests/sec:	139.5949
+  
+  Total data:	3407 bytes
+  Size/request:	68 bytes
+
+Response time histogram:
+  0.000 [1]	|■
+  0.036 [39]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.072 [0]	|
+  0.107 [0]	|
+  0.143 [0]	|
+  0.179 [0]	|
+  0.214 [0]	|
+  0.250 [0]	|
+  0.285 [0]	|
+  0.321 [0]	|
+  0.357 [10]	|■■■■■■■■■■
+
+
+Latency distribution:
+  10% in 0.0003 secs
+  25% in 0.0004 secs
+  50% in 0.0004 secs
+  75% in 0.0006 secs
+  90% in 0.3529 secs
+  95% in 0.3534 secs
+  0% in 0.0000 secs
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0001 secs, 0.0002 secs, 0.3568 secs
+  DNS-lookup:	0.0000 secs, 0.0000 secs, 0.0003 secs
+  req write:	0.0000 secs, 0.0000 secs, 0.0001 secs
+  resp wait:	0.0707 secs, 0.0002 secs, 0.3562 secs
+  resp read:	0.0000 secs, 0.0000 secs, 0.0001 secs
+
+Status code distribution:
+  [200]	1 responses
+  [409]	40 responses
+  [500]	9 responses
+
+
+
+Completed test: User Registration
+--------------------------------------------------
+Creating test user for login performance testing...
+
+Running test: User Login
+URL: http://localhost:8080/api/v1/users/login
+Method: POST
+Concurrency: 20
+Requests: 100
+
+Summary:
+  Total:	1.1714 secs
+  Slowest:	0.4982 secs
+  Fastest:	0.1600 secs
+  Average:	0.1955 secs
+  Requests/sec:	85.3690
+  
+  Total data:	48100 bytes
+  Size/request:	481 bytes
+
+Response time histogram:
+  0.160 [1]	|
+  0.194 [86]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.228 [0]	|
+  0.261 [0]	|
+  0.295 [0]	|
+  0.329 [2]	|■
+  0.363 [9]	|■■■■
+  0.397 [0]	|
+  0.431 [0]	|
+  0.464 [0]	|
+  0.498 [2]	|■
+
+
+Latency distribution:
+  10% in 0.1631 secs
+  25% in 0.1672 secs
+  50% in 0.1733 secs
+  75% in 0.1760 secs
+  90% in 0.3334 secs
+  95% in 0.3426 secs
+  99% in 0.4982 secs
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0001 secs, 0.1600 secs, 0.4982 secs
+  DNS-lookup:	0.0000 secs, 0.0000 secs, 0.0003 secs
+  req write:	0.0000 secs, 0.0000 secs, 0.0002 secs
+  resp wait:	0.1953 secs, 0.1599 secs, 0.4970 secs
+  resp read:	0.0000 secs, 0.0000 secs, 0.0001 secs
+
+Status code distribution:
+  [200]	100 responses
+
+
+
+Completed test: User Login
+--------------------------------------------------
+
+Performance testing complete!
+For more comprehensive load testing, use k6 with the load-test.js script:
+  k6 run load-test.js
+
+## K6 Load Test Results
+
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: load-test.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 100 max VUs, 1m0s max duration (incl. graceful stop):
+              * default: 100 looping VUs for 30s (gracefulStop: 30s)
+
+
+running (0m01.0s), 100/100 VUs, 0 complete and 0 interrupted iterations
+default   [   3% ] 100 VUs  01.0s/30s
+
+running (0m02.0s), 100/100 VUs, 0 complete and 0 interrupted iterations
+default   [   7% ] 100 VUs  02.0s/30s
+
+running (0m03.0s), 100/100 VUs, 0 complete and 0 interrupted iterations
+default   [  10% ] 100 VUs  03.0s/30s
+
+running (0m04.0s), 100/100 VUs, 97 complete and 0 interrupted iterations
+default   [  13% ] 100 VUs  04.0s/30s
+
+running (0m05.0s), 100/100 VUs, 100 complete and 0 interrupted iterations
+default   [  17% ] 100 VUs  05.0s/30s
+
+running (0m06.0s), 100/100 VUs, 100 complete and 0 interrupted iterations
+default   [  20% ] 100 VUs  06.0s/30s
+
+running (0m07.0s), 100/100 VUs, 100 complete and 0 interrupted iterations
+default   [  23% ] 100 VUs  07.0s/30s
+
+running (0m08.0s), 100/100 VUs, 200 complete and 0 interrupted iterations
+default   [  27% ] 100 VUs  08.0s/30s
+
+running (0m09.0s), 100/100 VUs, 200 complete and 0 interrupted iterations
+default   [  30% ] 100 VUs  09.0s/30s
+
+running (0m10.0s), 100/100 VUs, 200 complete and 0 interrupted iterations
+default   [  33% ] 100 VUs  10.0s/30s
+
+running (0m11.0s), 100/100 VUs, 200 complete and 0 interrupted iterations
+default   [  37% ] 100 VUs  11.0s/30s
+
+running (0m12.0s), 100/100 VUs, 300 complete and 0 interrupted iterations
+default   [  40% ] 100 VUs  12.0s/30s
+
+running (0m13.0s), 100/100 VUs, 300 complete and 0 interrupted iterations
+default   [  43% ] 100 VUs  13.0s/30s
+
+running (0m14.0s), 100/100 VUs, 300 complete and 0 interrupted iterations
+default   [  47% ] 100 VUs  14.0s/30s
+
+running (0m15.0s), 100/100 VUs, 300 complete and 0 interrupted iterations
+default   [  50% ] 100 VUs  15.0s/30s
+
+running (0m16.0s), 100/100 VUs, 400 complete and 0 interrupted iterations
+default   [  53% ] 100 VUs  16.0s/30s
+
+running (0m17.0s), 100/100 VUs, 400 complete and 0 interrupted iterations
+default   [  57% ] 100 VUs  17.0s/30s
+
+running (0m18.0s), 100/100 VUs, 400 complete and 0 interrupted iterations
+default   [  60% ] 100 VUs  18.0s/30s
+
+running (0m19.0s), 100/100 VUs, 400 complete and 0 interrupted iterations
+default   [  63% ] 100 VUs  19.0s/30s
+
+running (0m20.0s), 100/100 VUs, 500 complete and 0 interrupted iterations
+default   [  67% ] 100 VUs  20.0s/30s
+
+running (0m21.0s), 100/100 VUs, 500 complete and 0 interrupted iterations
+default   [  70% ] 100 VUs  21.0s/30s
+
+running (0m22.0s), 100/100 VUs, 500 complete and 0 interrupted iterations
+default   [  73% ] 100 VUs  22.0s/30s
+
+running (0m23.0s), 100/100 VUs, 500 complete and 0 interrupted iterations
+default   [  77% ] 100 VUs  23.0s/30s
+
+running (0m24.0s), 100/100 VUs, 600 complete and 0 interrupted iterations
+default   [  80% ] 100 VUs  24.0s/30s
+
+running (0m25.0s), 100/100 VUs, 600 complete and 0 interrupted iterations
+default   [  83% ] 100 VUs  25.0s/30s
+
+running (0m26.0s), 100/100 VUs, 600 complete and 0 interrupted iterations
+default   [  87% ] 100 VUs  26.0s/30s
+
+running (0m27.0s), 100/100 VUs, 600 complete and 0 interrupted iterations
+default   [  90% ] 100 VUs  27.0s/30s
+
+running (0m28.0s), 100/100 VUs, 700 complete and 0 interrupted iterations
+default   [  93% ] 100 VUs  28.0s/30s
+
+running (0m29.0s), 100/100 VUs, 700 complete and 0 interrupted iterations
+default   [  97% ] 100 VUs  29.0s/30s
+
+running (0m30.0s), 100/100 VUs, 700 complete and 0 interrupted iterations
+default   [ 100% ] 100 VUs  30.0s/30s
+
+running (0m31.0s), 100/100 VUs, 700 complete and 0 interrupted iterations
+default ↓ [ 100% ] 100 VUs  30s
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✗ 'p(95)<500' p(95)=1.02s
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......................: 6400   202.877252/s
+    checks_succeeded...................: 75.42% 4827 out of 6400
+    checks_failed......................: 24.57% 1573 out of 6400
+
+    ✓ register success
+    ✗ register time OK
+      ↳  0% — ✓ 0 / ✗ 800
+    ✓ login success
+    ✗ login time OK
+      ↳  4% — ✓ 32 / ✗ 768
+    ✓ get accounts success
+    ✓ accounts retrieved
+    ✓ deposit success
+    ✗ deposit time OK
+      ↳  99% — ✓ 795 / ✗ 5
+
+    HTTP
+    http_req_duration.......................................................: avg=485.18ms min=242.05µs med=500.51ms max=1.2s  p(90)=1s    p(95)=1.02s
+      { expected_response:true }............................................: avg=485.18ms min=242.05µs med=500.51ms max=1.2s  p(90)=1s    p(95)=1.02s
+    http_req_failed.........................................................: 0.00%  0 out of 3200
+    http_reqs...............................................................: 3200   101.438626/s
+
+    EXECUTION
+    iteration_duration......................................................: avg=3.94s    min=3.69s    med=3.95s    max=4.18s p(90)=4.07s p(95)=4.07s
+    iterations..............................................................: 800    25.359656/s
+    vus.....................................................................: 100    min=100       max=100
+    vus_max.................................................................: 100    min=100       max=100
+
+    NETWORK
+    data_received...........................................................: 1.7 MB 55 kB/s
+    data_sent...............................................................: 1.1 MB 36 kB/s
+
+
+
+
+running (0m31.5s), 000/100 VUs, 800 complete and 0 interrupted iterations
+default ✓ [ 100% ] 100 VUs  30s
+
+## Recommendations
+
+Based on these results, consider the following optimizations:
+2. Improve error handling and add retry logic for database operations

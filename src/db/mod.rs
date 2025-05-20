@@ -2,6 +2,8 @@ use anyhow::Result;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
+use sqlx::Postgres;
+use sqlx::migrate::MigrateDatabase;
 
 #[cfg(not(debug_assertions))]
 pub async fn init_db_pool(database_url: &str) -> Result<PgPool> {
@@ -10,10 +12,13 @@ pub async fn init_db_pool(database_url: &str) -> Result<PgPool> {
         Postgres::create_database(database_url).await?;
     }
 
-    // Connect to the database
+    // Connect to the database with optimized connection pool settings
     let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .acquire_timeout(Duration::from_secs(3))
+        .max_connections(20)        // Increased from 5 for better concurrency
+        .min_connections(5)         // Keep a minimum pool of connections ready
+        .acquire_timeout(Duration::from_secs(5))
+        .idle_timeout(Duration::from_secs(30))  // Release idle connections
+        .max_lifetime(Duration::from_secs(1800)) // 30-minute max lifetime
         .connect(database_url)
         .await?;
 
@@ -26,9 +31,11 @@ pub async fn init_db_pool(database_url: &str) -> Result<PgPool> {
 #[cfg(debug_assertions)]
 pub async fn init_db_pool(database_url: &str) -> Result<PgPool> {
     // Try to connect to the database with a short timeout
+    // In debug mode, we use less aggressive pooling
     let connect_result = PgPoolOptions::new()
-        .max_connections(5)
-        .acquire_timeout(Duration::from_secs(1))
+        .max_connections(10)        // Increased from 5, but still modest for dev
+        .min_connections(2)         // Maintain a small pool for development
+        .acquire_timeout(Duration::from_secs(3))
         .connect(database_url)
         .await;
 
